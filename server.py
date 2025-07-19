@@ -4,6 +4,7 @@ import json
 import requests
 import re
 import time
+import os
 from urllib.parse import urlparse, quote
 from requests.adapters import HTTPAdapter, Retry
 
@@ -129,6 +130,9 @@ def fetch_leta_search(query):
 
 class RequestHandler(BaseHTTPRequestHandler):
     def do_POST(self):
+        ollama_api = os.environ.get('OLLAMA_API', 'http://127.0.0.1:11434')
+        url = f"{ollama_api}/v1/chat/completions"
+
         s = requests.Session()
 
         retries = Retry(total=10,
@@ -170,7 +174,7 @@ class RequestHandler(BaseHTTPRequestHandler):
             for attempt in range(max_retries):
                 try:
                     response = s.post(
-                        'http://127.0.0.1:11434/v1/chat/completions',
+                        f"{ollama_api}/v1/chat/completions",
                         json=data,
                         headers=headers,
                         timeout=45
