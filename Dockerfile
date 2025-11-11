@@ -2,8 +2,11 @@ FROM python:slim
 
 WORKDIR /app
 
-# Install requests library
-RUN pip install --no-cache-dir requests
+# Copy requirements files
+COPY requirements.txt .
+
+# Install production dependencies
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy server.py from the current directory
 COPY server.py .
