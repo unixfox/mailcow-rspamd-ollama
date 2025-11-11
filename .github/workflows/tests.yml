@@ -28,7 +28,7 @@ jobs:
     
     - name: Run tests with pytest
       run: |
-        pytest --cov --cov-report=xml --cov-report=term
+        pytest -v
 
   lint:
     runs-on: ubuntu-latest
