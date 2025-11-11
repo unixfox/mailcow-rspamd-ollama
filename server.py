@@ -56,7 +56,7 @@ def fetch_search(query):
             ddgs = DDGS(timeout=10)
             results = ddgs.text(
                 query=query,
-                max_results=10,
+                max_results=2,
                 backend=backends
             )
             
