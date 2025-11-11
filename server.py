@@ -25,6 +25,7 @@ def extract_domains_and_names(messages):
 
             # Extract domains
             found_domains = re.findall(domain_regex, content)
+            domains.update(found_domains)
 
             # Extract name from From header with various formats
             if content.lower().startswith("from:"):
@@ -32,7 +33,7 @@ def extract_domains_and_names(messages):
                 # From: John Doe <john@example.com>
                 # From: <noreply@example.com>
                 # From: Company Name <support@example.com>
-                match = re.search(r'From:\s*(?:([^<]+?)\s*<|([^<\s]+@[^>\s]+))', content)
+                match = re.search(r'From:\s*(?:([^<]+?)\s*<|<([^>]+)>)', content, re.IGNORECASE)
                 if match:
                     name = match.group(1) or match.group(2)
                     if name:
