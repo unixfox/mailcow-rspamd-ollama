@@ -49,7 +49,7 @@ def extract_domains_and_names(messages):
 def fetch_search(query):
     """Search using DDGS library with multiple backends."""
     max_retries = 3
-    backends = "bing, brave, duckduckgo, yahoo"
+    backends = "brave, duckduckgo"
     
     for attempt in range(max_retries):
         try:
