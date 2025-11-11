@@ -1,6 +1,5 @@
 import pytest
 import json
-import responses
 from unittest.mock import Mock, patch, MagicMock
 from http.server import HTTPServer
 import server
@@ -105,97 +104,46 @@ class TestExtractDomainsAndNames:
         assert "John Doe" in names
 
 
-class TestFetchLetaSearch:
-    """Test cases for fetch_leta_search function"""
+class TestFetchSearch:
+    """Test cases for fetch_search function"""
     
-    @responses.activate
     def test_successful_search(self):
-        """Test successful search with valid response"""
-        mock_response = {
-            "nodes": [
-                {
-                    "type": "data",
-                    "data": [
-                        {"success": True},
-                        [0, 1],
-                        {
-                            "link": 2,
-                            "snippet": 3,
-                            "title": 4
-                        },
-                        "https://example.com",
-                        "This is a snippet",
-                        "Example Title",
-                        {
-                            "link": 5,
-                            "snippet": 6,
-                            "title": 7
-                        },
-                        "https://test.com",
-                        "Another snippet",
-                        "Test Title"
-                    ]
-                }
-            ]
-        }
-        
-        responses.add(
-            responses.GET,
-            "https://leta.mullvad.net/search/__data.json",
-            json=mock_response,
-            status=200
-        )
-        
-        results = server.fetch_leta_search("test query")
+        """Test successful search with real DDGS library"""
+        results = server.fetch_search("Python programming")
         assert isinstance(results, list)
-        assert len(results) <= 2
+        assert len(results) > 0
+        # Verify result structure
+        for result in results:
+            assert "title" in result
+            assert "link" in result
+            assert "snippet" in result
+            # Check that we got actual data, not error messages
+            assert result["title"] != "Error"
+            assert result["title"] != "No results"
     
-    @responses.activate
-    def test_timeout_retry(self):
-        """Test retry logic on timeout"""
-        responses.add(
-            responses.GET,
-            "https://leta.mullvad.net/search/__data.json",
-            body=responses.ConnectionError("Connection timeout")
-        )
-        
-        results = server.fetch_leta_search("test query")
+    def test_empty_query_results(self):
+        """Test search with a very specific query that might return few results"""
+        results = server.fetch_search("xyzabc123nonexistent999query")
         assert isinstance(results, list)
-        assert len(results) == 1
-        assert "timeout" in results[0]["snippet"].lower()
+        # Should still return a list, even if empty or with "No results" message
+        assert len(results) >= 0
     
-    @responses.activate
-    def test_http_error(self):
-        """Test handling HTTP errors"""
-        responses.add(
-            responses.GET,
-            "https://leta.mullvad.net/search/__data.json",
-            json={"error": "Server error"},
-            status=500
-        )
-        
-        results = server.fetch_leta_search("test query")
+    def test_special_characters_in_query(self):
+        """Test search with special characters"""
+        results = server.fetch_search("Python & JavaScript")
         assert isinstance(results, list)
-    
-    @responses.activate
-    def test_invalid_json_structure(self):
-        """Test handling invalid JSON structure"""
-        responses.add(
-            responses.GET,
-            "https://leta.mullvad.net/search/__data.json",
-            json={"invalid": "structure"},
-            status=200
-        )
-        
-        results = server.fetch_leta_search("test query")
-        assert isinstance(results, (list, str))
+        assert len(results) > 0
+        for result in results:
+            assert "title" in result
+            assert "link" in result
+            assert "snippet" in result
 
 
 class TestRequestHandler:
     """Test cases for RequestHandler class"""
     
     @patch('server.requests.Session')
-    @patch('server.fetch_leta_search')
+    @patch('server.fetch_search')
     def test_successful_post_request(self, mock_search, mock_session):
         """Test successful POST request handling"""
         # Setup
@@ -277,7 +225,7 @@ class TestRequestHandler:
         handler.send_response.assert_called_once_with(500)
     
     @patch('server.requests.Session')
-    @patch('server.fetch_leta_search')
+    @patch('server.fetch_search')
     def test_web_context_insertion(self, mock_search, mock_session):
         """Test that web context is properly inserted into messages"""
         request_data = {

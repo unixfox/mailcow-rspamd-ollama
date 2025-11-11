@@ -50,11 +50,6 @@ Run tests:
 pytest
 ```
 
-Run tests with coverage:
-```bash
-pytest --cov --cov-report=html
-```
-
 ### Running Linters
 
 ```bash
